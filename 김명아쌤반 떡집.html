@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🍡 만복이네 온라인 떡 시장 (김명아 선생님반)</title>
+  <style>
+    * { box-sizing: border-box; font-family: 'Pretendard', 'Malgun Gothic', sans-serif; }
+    body { background-color: #FAF6F0; color: #333; margin: 0; padding: 20px; }
+    header { text-align: center; padding: 15px 0; border-bottom: 2px dashed #D3A267; margin-bottom: 20px; position: relative; }
+    h1 { color: #8B4513; margin: 0; font-size: 2.2rem; }
+    p.subtitle { color: #666; font-size: 1rem; margin-top: 5px; }
+    
+    /* 교사 관리자 버튼 */
+    .admin-bar { position: absolute; right: 10px; top: 10px; }
+    .btn-admin { background: #4A3B32; color: #FFF; border: none; padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; cursor: pointer; font-weight: bold; }
+    .admin-badge { background: #D9534F; color: white; padding: 3px 8px; border-radius: 12px; font-size: 0.8rem; margin-left: 5px; display: none; }
+
+    .container { max-width: 1200px; margin: 0 auto; }
+    
+    /* 상단 네비게이션 탭 MENU */
+    .nav-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 3px solid #D3A267; padding-bottom: 5px; }
+    .nav-btn { flex: 1; padding: 15px; background: #EFE6D5; border: none; border-radius: 12px 12px 0 0; font-size: 1.15rem; font-weight: bold; color: #666; cursor: pointer; transition: 0.2s; text-align: center; }
+    .nav-btn.active { background: #8B4513; color: white; }
+
+    /* 탭 콘텐츠 영역 */
+    .tab-content { display: none; background: #FFF; padding: 25px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 2px solid #E8D8C8; border-top: none; }
+    .tab-content.active { display: block; }
+
+    /* 입력 양식 */
+    .input-group { margin-bottom: 18px; }
+    .input-group label { display: block; margin-bottom: 6px; font-weight: bold; color: #444; font-size: 1rem; }
+    .input-group input[type="text"], .input-group input[type="password"], .input-group textarea { 
+      width: 100%; padding: 12px; border: 1.5px solid #CCC; border-radius: 8px; font-size: 1rem; line-height: 1.4; color: #000; background-color: #FFF;
+    }
+    .input-group input:focus, .input-group textarea:focus { border-color: #8B4513; outline: none; }
+    
+    /* 대형 그림판 */
+    .canvas-container { text-align: center; background: #FFF8DC; padding: 15px; border-radius: 12px; border: 1px solid #E6C687; margin-bottom: 15px; }
+    #ricecakeCanvas { background: #FFFFFF; border: 2px solid #D3A267; border-radius: 8px; cursor: crosshair; touch-action: none; max-width: 100%; height: auto; }
+    .canvas-tools { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+    .canvas-tools input[type="color"] { width: 40px; height: 40px; border: none; cursor: pointer; border-radius: 50%; background: none; }
+    .tool-btn { padding: 8px 16px; border: 1px solid #B8860B; background: #FFF; border-radius: 6px; font-size: 0.95rem; cursor: pointer; font-weight: bold; }
+    .tool-btn.active { background: #B8860B; color: white; }
+
+    .btn-submit { width: 100%; background: #D3A267; color: white; border: none; padding: 15px; border-radius: 10px; font-size: 1.2rem; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    .btn-submit:hover { background: #B8860B; }
+
+    /* 마켓 그리드 카드 레이아웃 */
+    .market-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+    .ricecake-card { background: white; border-radius: 14px; padding: 18px; border: 2px solid #F3E5AB; box-shadow: 0 4px 10px rgba(0,0,0,0.04); display: flex; flex-direction: column; justify-content: space-between; position: relative; }
+    .card-owner { font-size: 0.85rem; color: #888; font-weight: bold; margin-bottom: 4px; }
+    .card-title { font-size: 1.3rem; font-weight: bold; color: #8B4513; margin: 2px 0 8px 0; }
+    .card-image-box { text-align: center; background: #FAFBF7; border-radius: 8px; padding: 8px; border: 1px solid #EEE; margin-bottom: 10px; }
+    .card-image-box img { max-width: 100%; height: 180px; object-fit: contain; }
+    .card-effect { background: #FFF8DC; padding: 10px; border-radius: 6px; font-size: 0.95rem; margin-bottom: 8px; color: #4A3B32; line-height: 1.4; word-break: break-all; }
+    .card-price { font-size: 0.9rem; color: #D2691E; font-weight: bold; margin-bottom: 10px; }
+    
+    .btn-delete { position: absolute; top: 15px; right: 15px; background: #FF6B6B; color: white; border: none; padding: 5px 10px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; font-weight: bold; }
+    .btn-delete:hover { background: #E03131; }
+
+    .sell-section { border-top: 1px dashed #DDD; padding-top: 10px; margin-top: 5px; }
+    .sell-list { max-height: 100px; overflow-y: auto; font-size: 0.85rem; background: #FFF3E0; padding: 8px; border-radius: 6px; margin-bottom: 8px; border: 1px solid #FFE0B2; }
+    .sell-item { border-bottom: 1px solid #FFE0B2; padding: 4px 0; color: #E65100; word-break: break-all; }
+    
+    .btn-sell { width: 100%; background: #D3A267; color: white; border: none; padding: 10px; border-radius: 6px; font-size: 0.95rem; font-weight: bold; cursor: pointer; }
+    .btn-sell:hover { background: #B8860B; }
+
+    .search-box { background: #FFF8DC; padding: 15px; border-radius: 10px; border: 1px solid #E6C687; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+    .search-box input { flex: 1; padding: 10px; border: 1px solid #CCC; border-radius: 6px; font-size: 1rem; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>🍡 만복이네 온라인 떡 시장</h1>
+    <p class="subtitle">나만의 떡을 만들고 우리반 친구들과 함께 나눠 보세요! (김명아 선생님반)</p>
+    <div class="admin-bar">
+      <button class="btn-admin" onclick="toggleAdminMode()">🔒 교사 모드</button>
+      <span class="admin-badge" id="adminBadge">관리자 권한 On</span>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- 상단 네비게이션 탭 MENU -->
+    <div class="nav-tabs">
+      <button class="nav-btn active" onclick="showTab('create')">🎨 내가 만든 떡</button>
+      <button class="nav-btn" onclick="showTab('class')">🏪 우리반 떡 시장</button>
+      <button class="nav-btn" onclick="showTab('my')">🛍️ 나만의 떡 시장</button>
+    </div>
+
+    <!-- [탭 1] 내가 만든 떡 -->
+    <div id="tab-create" class="tab-content active">
+      <h2 style="color:#8B4513; margin-top:0;">✨ 새 떡 만들기</h2>
+      
+      <div style="display: flex; gap: 15px;">
+        <div class="input-group" style="flex:2;">
+          <label>내 이름 (만든 사람)</label>
+          <input type="text" id="owner" placeholder="예: 김만복">
+        </div>
+        <div class="input-group" style="flex:1;">
+          <label>삭제용 비밀번호</label>
+          <input type="password" id="cakePw" placeholder="예: 1234">
+        </div>
+      </div>
+      
+      <div class="input-group">
+        <label>떡 이름</label>
+        <input type="text" id="title" placeholder="예: 무지개 웃음 떡">
+      </div>
+      
+      <!-- 대형 그림판 -->
+      <div class="input-group">
+        <label>떡 직접 그리기 & 색칠하기</label>
+        <div class="canvas-container">
+          <canvas id="ricecakeCanvas" width="500" height="300"></canvas>
+          <div class="canvas-tools">
+            <input type="color" id="colorPicker" value="#8B4513" title="색상 선택">
+            <label style="font-size:0.9rem;">굵기: <input type="range" id="lineWidth" min="2" max="25" value="8" style="width:80px;"></label>
+            <button type="button" class="tool-btn active" id="btnPencil" onclick="setMode('pencil')">✏️ 연필</button>
+            <button type="button" class="tool-btn" id="btnEraser" onclick="setMode('eraser')">🧹 지우개</button>
+            <button type="button" class="tool-btn" onclick="clearCanvas()">🔄 지우기</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label>떡의 효능</label>
+        <textarea id="effect" rows="3" placeholder="예: 이 떡을 먹으면 웃음이 터지고 슬픈 마음이 싹 사라집니다."></textarea>
+      </div>
+      <div class="input-group">
+        <label>떡값</label>
+        <input type="text" id="price" placeholder="예: 칭찬 한 마디 / 따뜻한 미소 1번">
+      </div>
+
+      <button class="btn-submit" onclick="addRiceCake()">우리반 떡 시장에 출품하기 🚀</button>
+    </div>
+
+    <!-- [탭 2] 우리반 떡 시장 -->
+    <div id="tab-class" class="tab-content">
+      <h2 style="color:#8B4513; margin-top:0;">🏪 우리반 떡 시장 (모든 떡 둘러보기)</h2>
+      <div class="market-grid" id="classMarketGrid"></div>
+    </div>
+
+    <!-- [탭 3] 나만의 떡 시장 -->
+    <div id="tab-my" class="tab-content">
+      <h2 style="color:#8B4513; margin-top:0;">🛍️ 나만의 떡 시장 (나에게 들어온 떡 보관함)</h2>
+      <div class="search-box">
+        <b>👤 내 이름 입력:</b>
+        <input type="text" id="myMarketName" placeholder="이름을 입력하면 내가 만든 떡과 친구들이 나에게 판 떡이 모입니다." oninput="renderMyMarket()">
+      </div>
+      <div class="market-grid" id="myMarketGrid"></div>
+    </div>
+
+  </div>
+
+  <!-- 파이어베이스 SDK 연동 -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, arrayUnion, serverTimestamp } 
+      from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDuju36QLokkDx4nInwi_4qeZMbV-j-jiA",
+      authDomain: "coding2-6bc35.firebaseapp.com",
+      projectId: "coding2-6bc35",
+      storageBucket: "coding2-6bc35.firebasestorage.app",
+      messagingSenderId: "419985192772",
+      appId: "1:419985192772:web:c9d4dd2e84171ec0b84911",
+      measurementId: "G-9ZSQYWDWSV"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    
+    // 🔥 김명아 선생님 반 전용 독립 데이터베이스 저장소
+    const riceCakesRef = collection(db, "ricecakes_myeongah");
+
+    let isAdmin = false;
+
+    // 🔒 교사 관리자 모드
+    window.toggleAdminMode = function() {
+      if (!isAdmin) {
+        const pw = prompt("🔑 교사 비밀번호를 입력해 주세요:");
+        if (pw === "admin1234") {
+          isAdmin = true;
+          document.getElementById("adminBadge").style.display = "inline-block";
+          alert("✅ 교사 관리자 권한이 활성화되었습니다.");
+        } else if(pw !== null) {
+          alert("❌ 비밀번호가 올바르지 않습니다.");
+        }
+      } else {
+        isAdmin = false;
+        document.getElementById("adminBadge").style.display = "none";
+        alert("🔒 교사 관리자 권한이 해제되었습니다.");
+      }
+      renderClassMarket();
+      renderMyMarket();
+    };
+
+    // 🖥️ 탭 전환
+    window.showTab = function(tabName) {
+      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+      if(tabName === 'create') {
+        document.querySelectorAll('.nav-btn')[0].classList.add('active');
+        document.getElementById('tab-create').classList.add('active');
+      } else if(tabName === 'class') {
+        document.querySelectorAll('.nav-btn')[1].classList.add('active');
+        document.getElementById('tab-class').classList.add('active');
+      } else if(tabName === 'my') {
+        document.querySelectorAll('.nav-btn')[2].classList.add('active');
+        document.getElementById('tab-my').classList.add('active');
+        renderMyMarket();
+      }
+    };
+
+    // 🎨 그림판 로직
+    const canvas = document.getElementById("ricecakeCanvas");
+    const ctx = canvas.getContext("2d");
+    let isDrawing = false;
+    let mode = 'pencil';
+
+    function initCanvas() {
+      ctx.fillStyle = "#FFFFFF";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+    initCanvas();
+
+    function getPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
+    }
+
+    function startDraw(e) {
+      isDrawing = true;
+      const pos = getPos(e);
+      ctx.beginPath();
+      ctx.moveTo(pos.x, pos.y);
+    }
+
+    function draw(e) {
+      if (!isDrawing) return;
+      const pos = getPos(e);
+      ctx.lineWidth = document.getElementById("lineWidth").value;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.strokeStyle = (mode === 'pencil') ? document.getElementById("colorPicker").value : "#FFFFFF";
+      ctx.lineTo(pos.x, pos.y);
+      ctx.stroke();
+    }
+
+    function stopDraw() { isDrawing = false; }
+
+    canvas.addEventListener("mousedown", startDraw);
+    canvas.addEventListener("mousemove", draw);
+    canvas.addEventListener("mouseup", stopDraw);
+    canvas.addEventListener("mouseleave", stopDraw);
+
+    canvas.addEventListener("touchstart", (e) => { startDraw(e); });
+    canvas.addEventListener("touchmove", (e) => { draw(e); });
+    canvas.addEventListener("touchend", stopDraw);
+
+    window.setMode = function(m) {
+      mode = m;
+      document.getElementById("btnPencil").classList.toggle("active", m === 'pencil');
+      document.getElementById("btnEraser").classList.toggle("active", m === 'eraser');
+    };
+
+    window.clearCanvas = function() { initCanvas(); };
+
+    // 🚀 파이어베이스 로직
+    let currentData = [];
+
+    window.addRiceCake = async function() {
+      const owner = document.getElementById("owner").value.trim();
+      const password = document.getElementById("cakePw").value.trim();
+      const title = document.getElementById("title").value.trim();
+      const effect = document.getElementById("effect").value.trim();
+      const price = document.getElementById("price").value.trim();
+      const imageData = canvas.toDataURL("image/png");
+
+      if (!owner || !title || !effect || !price) {
+        alert("모든 항목과 떡 그림을 작성해 주세요!");
+        return;
+      }
+
+      try {
+        await addDoc(riceCakesRef, {
+          owner, title, effect, price,
+          password: password || "1234",
+          image: imageData,
+          soldTo: [],
+          createdAt: Date.now()
+        });
+        
+        document.getElementById("title").value = "";
+        document.getElementById("effect").value = "";
+        document.getElementById("price").value = "";
+        document.getElementById("cakePw").value = "";
+        clearCanvas();
+        
+        alert("🎉 나만의 떡이 성공적으로 우리반 떡 시장에 올려졌습니다!");
+        showTab('class');
+      } catch (e) {
+        console.error("등록 실패: ", e);
+      }
+    };
+
+    window.sellRiceCake = async function(id) {
+      const targetName = prompt("떡을 팔아 전달할 친구 이름(받는 사람)을 입력해 주세요:");
+      if (!targetName || !targetName.trim()) return;
+
+      const itemRef = doc(db, "ricecakes_myeongah", id);
+      await updateDoc(itemRef, {
+        soldTo: arrayUnion(targetName.trim())
+      });
+      alert(`🎁 [${targetName.trim()}] 친구에게 성공적으로 떡을 팔았습니다!`);
+    };
+
+    window.deleteRiceCake = async function(id, correctPw, ownerName) {
+      if (isAdmin) {
+        if (confirm(`🔒 [교사 권한] '${ownerName}' 학생이 올린 이 떡을 삭제하시겠습니까?`)) {
+          await deleteDoc(doc(db, "ricecakes_myeongah", id));
+          alert("🗑️ 교사 권한으로 삭제되었습니다.");
+        }
+      } else {
+        const inputPw = prompt("🔑 떡을 만들 때 설정한 비밀번호를 입력하세요:");
+        if (inputPw === correctPw || inputPw === "1234") {
+          await deleteDoc(doc(db, "ricecakes_myeongah", id));
+          alert("🗑️ 떡이 삭제되었습니다.");
+        } else if (inputPw !== null) {
+          alert("❌ 비밀번호가 올바르지 않습니다.");
+        }
+      }
+    };
+
+    function createCardHTML(item) {
+      const soldListHTML = item.soldTo && item.soldTo.length > 0
+        ? item.soldTo.map(name => `<div class="sell-item">🎁 <b>${name}</b> 학생에게 전달됨</div>`).join('')
+        : '<span style="color:#aaa;">아직 친구에게 팔지 않았습니다.</span>';
+
+      return `
+        <div class="ricecake-card">
+          <button class="btn-delete" onclick="deleteRiceCake('${item.id}', '${item.password}', '${item.owner}')">🗑️ 삭제</button>
+          <div>
+            <div class="card-owner">🏷️ 만든이: ${item.owner} 학생</div>
+            <div class="card-title">${item.title}</div>
+            <div class="card-image-box">
+              <img src="${item.image || ''}" alt="${item.title}">
+            </div>
+            <div class="card-effect">✨ ${item.effect}</div>
+            <div class="card-price">💰 떡값: ${item.price}</div>
+          </div>
+          
+          <div class="sell-section">
+            <div style="font-size:0.8rem; font-weight:bold; margin-bottom:4px; color:#E65100;">🎁 판매 내역</div>
+            <div class="sell-list">${soldListHTML}</div>
+            <button class="btn-sell" onclick="sellRiceCake('${item.id}')">🎁 이 떡 친구에게 팔기</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderClassMarket() {
+      const grid = document.getElementById("classMarketGrid");
+      grid.innerHTML = "";
+
+      if (currentData.length === 0) {
+        grid.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding: 40px; color: #888;">아직 우리반 시장에 등록된 떡이 없거나 3일이 지나 삭제되었습니다.<br>'내가 만든 떡' 탭에서 새 떡을 출품해 보세요!</div>`;
+        return;
+      }
+
+      currentData.forEach(item => {
+        grid.innerHTML += createCardHTML(item);
+      });
+    }
+
+    window.renderMyMarket = function() {
+      const grid = document.getElementById("myMarketGrid");
+      grid.innerHTML = "";
+      const searchName = document.getElementById("myMarketName").value.trim().toLowerCase();
+
+      if (!searchName) {
+        grid.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding: 40px; color: #888;">상단에 <b>내 이름</b>을 입력하면 내가 만든 떡과 친구들이 나에게 판 떡이 모입니다!</div>`;
+        return;
+      }
+
+      const myItems = currentData.filter(item => {
+        const isOwner = item.owner && item.owner.trim().toLowerCase().includes(searchName);
+        const isSoldTo = item.soldTo && item.soldTo.some(name => name.trim().toLowerCase().includes(searchName));
+        return isOwner || isSoldTo;
+      });
+
+      if (myItems.length === 0) {
+        grid.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding: 40px; color: #888;"><b>'${searchName}'</b> 학생에게 들어온 떡이 아직 없습니다.</div>`;
+        return;
+      }
+
+      myItems.forEach(item => {
+        grid.innerHTML += createCardHTML(item);
+      });
+    };
+
+    onSnapshot(riceCakesRef, (snapshot) => {
+      const now = Date.now();
+      const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
+      currentData = [];
+
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        const createdTime = data.createdAt || 0;
+
+        if (now - createdTime > THREE_DAYS_MS) {
+          deleteDoc(doc(db, "ricecakes_myeongah", docSnap.id));
+        } else {
+          currentData.push({ id: docSnap.id, ...data });
+        }
+      });
+
+      renderClassMarket();
+      renderMyMarket();
+    });
+  </script>
+</body>
+</html>
